@@ -19,12 +19,26 @@ def final_lst(x):
             listing.append(i)        
     return listing
 
+class Slider(QSlider):
+
+    def mousePressEvent(self, e):
+        if e.button() == Qt.LeftButton:
+            e.accept()
+            x = e.pos().x()
+            value = (self.maximum() - self.minimum()) * x / self.width() + self.minimum()
+            self.setValue(round(value))
+        else:
+            return super().mousePressEvent(self, e)
+
 class player(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Video Player")
         self.userplaylist = []
         self.playlist = []
+        self.deci = 0
+        self.v = 0
+        self.positiond = 0
         # adding menubar
         #open file
         openFile = QAction("&Open Video", self)
@@ -115,24 +129,28 @@ class player(QMainWindow):
 
         # adding volume
         self.volumeButton = QPushButton()
-        self.volumeButton.setIcon(self.style().standardIcon(QStyle.SP_MediaVolume))
         self.volumeButton.setStyleSheet("max-width: 20px;")
         self.volumeButton.setShortcut("Up")
+        self.volumeButton.setIcon(self.style().standardIcon(QStyle.SP_MediaVolume))
         self.volumeButton.clicked.connect(self.volumePlay)
 
         # adding volume control
         '''self.volumeControl = QAudio()
         self.volumeControl.VolumeScale'''
         # adding volume slider
-        self.volumeSlider = QSlider(Qt.Horizontal)
-        self.volumeSlider.setRange(0, 100)
+        self.volumeSlider = Slider(Qt.Horizontal)
+        self.volumeSlider.setRange(0, 10)
         self.volumeSlider.setStyleSheet("max-width: 100px;")
-        self.volumeSlider.setMouseTracking(True)
-        self.volumeSlider.setValue(0)
-        self.volumeSlider.setCursor(QCursor(Qt.PointingHandCursor))
+        #self.volumeSlider.setMouseTracking(True)
+        self.volumeSlider.setValue(5)
+        #self.volumeSlider.setCursor(QCursor(Qt.PointingHandCursor))
+        self.volumeSlider.singleStep()
         self.volumeSlider.setSingleStep(1)
-        self.volumeSlider.setPageStep(10)
-        self.volumeSlider.sliderMoved.connect(self.setVolumed)
+        #self.volumeSlider.setPageStep(10)
+        self.volumeSlider.tickInterval()
+        self.volumeSlider.setTickInterval(1)
+        self.volumeSlider.mousePressEvent
+        self.volumeSlider.valueChanged.connect(self.setVolumed)
 
         # adding position slider
         self.positionSlider = QSlider(Qt.Horizontal)
@@ -176,17 +194,19 @@ class player(QMainWindow):
         layout.addWidget(self.positionSlider)
  
         widget.setLayout(layout)
+        self.player.volumeChanged.connect(self.volumeChanged)
         self.player.setVideoOutput(self.videoWidget)
         self.player.stateChanged.connect(self.mediaStateChanged)
         self.player.positionChanged.connect(self.positionChanged)
         self.player.durationChanged.connect(self.durationChanged)
-        self.player.volumeChanged.connect(self.volumeChanged)
         self.player.error.connect(self.handleError)
-        
+
+    #for playlist play   
     def playlistPlay(self):
         print("ls")
         print(self.playlist)
 
+    # for open folder ans select file
     def openFolders(self):
         print("folder")
         self.folder = QFileDialog().getExistingDirectory(self, 'Open File', '')
@@ -195,6 +215,7 @@ class player(QMainWindow):
         self.playlist = final_lst(self.path_list)
         print(self.playlist)
 
+    # for open a video
     def openVideo(self, mediafile=None):
         print(mediafile)
         mediafile = mediafile
@@ -208,63 +229,90 @@ class player(QMainWindow):
         print(type(self.name))
         self.player.setMedia(QMediaContent(QUrl.fromLocalFile(self.name)))
         
+    # for start play
     def startPlay(self):
         print("playing")
         self.player.play()
     
+    # for pause the play
     def pausePlay(self):
         if self.player.state() == QMediaPlayer.PlayingState:
             print("stoping")
             self.player.pause()
 
+    # for stop play
     def stopPlay(self):
         if self.player.state() == QMediaPlayer.PlayingState or self.player.state() == QMediaPlayer.PausedState:
             self.openVideo(self.name)
 
+    # to go to next video
     def skipPlay(self):
         print("working skip")
     
+    # to go back in video 
     def seekPlay(self):
         print("working seek")
         print(self.position)
         #self.positionSlider.setValue(self.position)
         self.player.setPosition(self.position - 10000)
 
+    # to go next video
     def skipfPlay(self):
         print("working skipf")
 
+    # to go forward in video
     def seekfPlay(self):
         print("working seekf")
         print(self.position)
         self.player.setPosition(self.position + 10000)
     
+    # volume 
     def volumePlay(self):
         print("volume")
         print(self.player.volume())
+        self.oldVolume = self.positiond
+        if self.deci == 1:
+            self.volumeButton.setIcon(self.style().standardIcon(QStyle.SP_MediaVolume))
+            print("old volume is: ", self.oldVolume)
+            self.setVolumed(self.v)
+            self.deci -= 1
+        else:
+            self.volumeButton.setIcon(self.style().standardIcon(QStyle.SP_MediaVolumeMuted))
+            print("old volume is: ", self.oldVolume)
+            self.v = self.positiond
+            self.setVolumed(0)
+            self.deci += 1
+
+    # media state change when click on play or pause
     def mediaStateChanged(self, state):
         if self.player.state() == QMediaPlayer.PlayingState:
             self.pauseButton.setIcon(self.style().standardIcon(QStyle.SP_MediaPause))
         else:
             self.playButton.setIcon(self.style().standardIcon(QStyle.SP_MediaPlay))
 
+    # if volume changed
     def volumeChanged(self):
-        self.volumeSlider.setRange(0, 100)
+        self.volumeSlider.setValue(self.positiond)
 
+    # set new volume
     def setVolumed(self, positiond):
+        self.positiond = positiond
         self.player.setVolume(positiond)
-        self.player.setValue(positiond)
 
+    # for slider position
     def positionChanged(self, position):
-        self.position = position
         #print(self.position)
         self.positionSlider.setValue(position)
  
+    # for duration of slider
     def durationChanged(self, duration):
         self.positionSlider.setRange(0, duration)
  
+    # for setting slider position
     def setPosition(self, position):
         self.player.setPosition(position)
  
+    # for handle error
     def handleError(self):
         self.playButton.setEnabled(False)
         self.error.setText("Error: " + self.player.errorString())
