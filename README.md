@@ -1,4 +1,4 @@
-# media-player
+# media-player v2
 Creating alternative of mpv media player for myself.
 
 ![v1](./v1.gif)
@@ -6,7 +6,6 @@ Creating alternative of mpv media player for myself.
 # Note to self...
 - [ ] replay and loop
 - [ ] add playlist choosing and saving
-- [ ] add volume control(Currently volume control doesn't work)
+- [x] add volume control(Currently volume control doesn't work)
 - [ ] after playlist add rest all things like next video 
 
-(Volume control i can't seems to make it work now.)
