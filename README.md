@@ -9,3 +9,4 @@ Creating alternative of mpv media player for myself.
 - [x] add volume control(Currently volume control doesn't work)
 - [ ] after playlist add rest all things like next video 
 
+(Later add new gif for sound control use example)
